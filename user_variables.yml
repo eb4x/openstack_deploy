@@ -21,6 +21,8 @@
 ## Debug and Verbose options.
 debug: false
 
+lxc_container_ssh_key: "{{ lookup('file', '/root/.ssh/id_ecdsa.pub') }}"
+
 ## Set the service setup host
 # The default is to use localhost (the deploy host where ansible runs),
 # but any other host can be used. If using an alternative host with all
@@ -48,19 +50,57 @@ install_method: source
 # Note that "swift" is automatically set as the default back-end if there
 # are any swift hosts in the environment. Use this setting to override
 # this automation if you wish for a different default back-end.
-# glance_default_store: file
+glance_default_store: rbd
 
 ## Ceph pool name for Glance to use
 # glance_rbd_store_pool: images
 # glance_rbd_store_chunk_size: 8
 
+## Common Cinder Overrides
+cinder_backends:
+  RBD:
+    volume_driver: cinder.volume.drivers.rbd.RBDDriver
+    rbd_pool: volumes
+    rbd_ceph_conf: /etc/ceph/ceph.conf
+    rbd_store_chunk_size: 8
+    volume_backend_name: rbddriver
+    rbd_user: "{{ cinder_ceph_client }}"
+    rbd_secret_uuid: "{{ cinder_ceph_client_uuid }}"
+    report_discard_supported: true
+cinder_service_backup_driver: cinder.backup.drivers.ceph.CephBackupDriver
+
 ## Common Nova Overrides
+nova_galera_database: nova_cell1
 # When nova_libvirt_images_rbd_pool is defined, ceph will be installed on nova
 # hosts.
-# nova_libvirt_images_rbd_pool: vms
+nova_libvirt_images_rbd_pool: vms
+nova_cpu_mode: custom
+nova_nova_conf_overrides:
+  libvirt:
+    cpu_model: Westmere-IBRS
+    cpu_model_extra_flags: pcid
+nova_virt_type: kvm
+
+## Common Neutron Overrides
+neutron_dns_domain: "openstack.slipsprogrammor.no."
+neutron_dnsmasq_dns_servers: "192.168.3.1"
+
+neutron_plugin_type: ml2.ovs.dvr
+neutron_l2_population: true
+neutron_provider_networks:
+  network_flat_networks: "physnet1"
+  network_mappings: "physnet1:br-provider"
+  network_interface_mappings: "br-provider:br-vlan"
+  network_types: "vxlan,vlan,flat"
+  network_vlan_ranges: "physnet1:1000:1000"
+  network_vxlan_ranges: "1:1000"
 
 # If you wish to change the dhcp_domain configured for both nova and neutron
 # dhcp_domain: openstacklocal
+
+## Common Horizon Overrides
+horizon_enable_password_retrieve: true
+horizon_show_keystone_v2_rc: false
 
 ## Common Glance Overrides when using a Swift back-end
 # By default when 'glance_default_store' is set to 'swift' the playbooks will
@@ -137,23 +177,23 @@ install_method: source
 
 ## Example environment variable setup:
 ## This is used by apt-cacher-ng to download apt packages:
-# proxy_env_url: http://username:pa$$w0rd@10.10.10.9:9000/
+proxy_env_url: http://192.168.3.1:8000
 
 ## (1) This sets up a permanent environment, used during and after deployment:
-# no_proxy_env: "localhost,127.0.0.1,{{ internal_lb_vip_address }},{{ external_lb_vip_address }},{% for host in groups['all_containers'] %}{{ hostvars[host]['container_address'] }}{% if not loop.last %},{% endif %}{% endfor %}"
-# global_environment_variables:
-#   HTTP_PROXY: "{{ proxy_env_url }}"
-#   HTTPS_PROXY: "{{ proxy_env_url }}"
-#   NO_PROXY: "{{ no_proxy_env }}"
-#   http_proxy: "{{ proxy_env_url }}"
-#   https_proxy: "{{ proxy_env_url }}"
-#   no_proxy: "{{ no_proxy_env }}"
+no_proxy_env: "localhost,127.0.0.1,{{ internal_lb_vip_address }},{{ external_lb_vip_address }},{% for host in groups['all_containers'] %}{{ hostvars[host]['container_address'] }}{% if not loop.last %},{% endif %}{% endfor %}"
+global_environment_variables:
+  HTTP_PROXY: "{{ proxy_env_url }}"
+  HTTPS_PROXY: "{{ proxy_env_url }}"
+  NO_PROXY: "{{ no_proxy_env }}"
+  http_proxy: "{{ proxy_env_url }}"
+  https_proxy: "{{ proxy_env_url }}"
+  no_proxy: "{{ no_proxy_env }}"
 #
 ## (2) This is applied only during deployment, nothing is left after deployment is complete:
-# deployment_environment_variables:
-#   http_proxy: "{{ proxy_env_url }}"
-#   https_proxy: "{{ proxy_env_url }}"
-#   no_proxy: "localhost,127.0.0.1,{{ internal_lb_vip_address }},{{ external_lb_vip_address }},{% for host in groups['keystone_all'] %}{{ hostvars[host]['container_address'] }}{% if not loop.last %},{% endif %}{% endfor %}"
+deployment_environment_variables:
+  http_proxy: "{{ proxy_env_url }}"
+  https_proxy: "{{ proxy_env_url }}"
+  no_proxy: "localhost,127.0.0.1,{{ internal_lb_vip_address }},{{ external_lb_vip_address }},{% for host in groups['keystone_all'] %}{{ hostvars[host]['container_address'] }}{% if not loop.last %},{% endif %}{% endfor %}"
 
 
 ## SSH connection wait time
@@ -173,10 +213,10 @@ install_method: source
 # HAProxy Keepalived configuration (cf. documentation)
 # Make sure that this is set correctly according to the CIDR used for your
 # internal and external addresses.
-# haproxy_keepalived_external_vip_cidr: "{{external_lb_vip_address}}/32"
-# haproxy_keepalived_internal_vip_cidr: "{{internal_lb_vip_address}}/32"
-# haproxy_keepalived_external_interface:
-# haproxy_keepalived_internal_interface:
+haproxy_keepalived_external_vip_cidr: "{{external_lb_vip_address}}/24"
+haproxy_keepalived_internal_vip_cidr: "{{internal_lb_vip_address}}/22"
+haproxy_keepalived_external_interface: "{{ ('br-maas' in ansible_interfaces) | ternary('br-maas', 'eth0') }}"
+haproxy_keepalived_internal_interface: br-mgmt
 
 # Defines the default VRRP id used for keepalived with haproxy.
 # Overwrite it to your value to make sure you don't overlap
@@ -189,5 +229,190 @@ install_method: source
 # haproxy_keepalived_priority_master:
 # haproxy_keepalived_priority_backup:
 
+haproxy_stats_enabled: true
+haproxy_stats_bind_address: "{{ external_lb_vip_address }}"
 # Keepalived default IP address used to check its alive status (IPv4 only)
-# keepalived_ping_address: "193.0.14.129"
+keepalived_ping_address: "192.168.3.254"
+
+# ansible-hardening settings
+security_ntp_servers:
+  - 192.168.3.1
+  - 192.168.3.10
+#  - ntp.uio.no
+security_ntp_server_options: iburst
+security_ntp_sync_rtc: true
+security_rhel7_session_timeout: 0
+
+## ceph-ansible settings
+## See https://github.com/ceph/ceph-ansible/tree/master/group_vars for
+## additional configuration options availble.
+
+#[all.yml]
+# Enable the ntp service by default to avoid clock skew on ceph nodes
+# Disable if an appropriate NTP client is already installed and configured
+ntp_service_enabled: false
+
+# This variable determines if ceph packages can be updated.  If False, the
+# package resources will use "state=present".  If True, they will use
+# "state=latest".
+#upgrade_ceph_packages: true
+
+######################
+# CEPH CONFIGURATION #
+######################
+
+## Ceph options
+#
+# Each cluster requires a unique, consistent filesystem ID. By
+# default, the playbook generates one for you and stores it in a file
+# in `fetch_directory`. If you want to customize how the fsid is
+# generated, you may find it useful to disable fsid generation to
+# avoid cluttering up your ansible repo. If you set `generate_fsid` to
+# false, you *must* generate `fsid` in another way.
+# ACTIVATE THE FSID VARIABLE FOR NON-VAGRANT DEPLOYMENT
+fsid: bf6fd8fa-aed5-4555-b0af-2e1ebb33d96e
+generate_fsid: false
+
+## Monitor options
+#
+# You must define either monitor_interface, monitor_address or monitor_address_block.
+# These variables must be defined at least in all.yml and overrided if needed (inventory host file or group_vars/*.yml).
+# Eg. If you want to specify for each monitor which address the monitor will bind to you can set it in your **inventory host file** by using 'monitor_address' variable.
+# Preference will go to monitor_address if both monitor_address and monitor_interface are defined.
+monitor_address_block: "{{ cidr_networks.container }}"
+
+## OSD options
+#
+journal_size: 5120 # OSD journal size in MB
+public_network: "{{ cidr_networks.container }}"
+cluster_network: "{{ cidr_networks.storage }}"
+osd_objectstore: bluestore
+
+# Ceph configuration file override.
+# This allows you to specify more configuration options
+# using an INI style format.
+#
+# When configuring RGWs, make sure you use the form [client.rgw.*]
+# instead of [client.radosgw.*].
+# For more examples check the profiles directory of https://github.com/ceph/ceph-ansible.
+#
+# The following sections are supported: [global], [mon], [osd], [mds], [client]
+#
+# Example:
+# ceph_conf_overrides:
+#   global:
+#     foo: 1234
+#     bar: 5678
+#   "client.rgw.{{ hostvars[groups.get(rgw_group_name)[0]]['ansible_hostname'] }}":
+#     rgw_zone: zone1
+#
+#ceph_conf_overrides_custom:
+#  global:
+#    osd_pool_default_autoscale_mode: on
+#    osd_pool_default_pg_num: 256
+#    osd_pool_default_pgp_num: 256
+
+#############
+# OPENSTACK #
+#############
+openstack_config: true
+# When pg_autoscale_mode is set to True, you must add the target_size_ratio key with a correct value
+# `pg_num` and `pgp_num` keys will be ignored, even if specified.
+openstack_glance_pool:
+  name: "images"
+  pg_num: "{{ osd_pool_default_pg_num }}"
+  pgp_num: "{{ osd_pool_default_pg_num }}"
+  rule_name: "replicated_rule"
+  type: 1
+  erasure_profile: ""
+  expected_num_objects: ""
+  application: "rbd"
+#  size: "{{ osd_pool_default_size }}"
+#  min_size: "{{ osd_pool_default_min_size }}"
+#  pg_autoscale_mode: False
+openstack_cinder_pool:
+  name: "volumes"
+  pg_num: "{{ osd_pool_default_pg_num }}"
+  pgp_num: "{{ osd_pool_default_pg_num }}"
+  rule_name: "replicated_rule"
+  type: 1
+  erasure_profile: ""
+  expected_num_objects: ""
+  application: "rbd"
+#  size: "{{ osd_pool_default_size }}"
+#  min_size: "{{ osd_pool_default_min_size }}"
+#  pg_autoscale_mode: False
+openstack_nova_pool:
+  name: "vms"
+  pg_num: "{{ osd_pool_default_pg_num }}"
+  pgp_num: "{{ osd_pool_default_pg_num }}"
+  rule_name: "replicated_rule"
+  type: 1
+  erasure_profile: ""
+  expected_num_objects: ""
+  application: "rbd"
+#  size: "{{ osd_pool_default_size }}"
+#  min_size: "{{ osd_pool_default_min_size }}"
+#  pg_autoscale_mode: False
+openstack_cinder_backup_pool:
+  name: "backups"
+  pg_num: "{{ osd_pool_default_pg_num }}"
+  pgp_num: "{{ osd_pool_default_pg_num }}"
+  rule_name: "replicated_rule"
+  type: 1
+  erasure_profile: ""
+  expected_num_objects: ""
+  application: "rbd"
+#  size: "{{ osd_pool_default_size }}"
+#  min_size: "{{ osd_pool_default_min_size }}"
+#  pg_autoscale_mode: False
+#openstack_gnocchi_pool:
+#  name: "metrics"
+#  pg_num: "{{ osd_pool_default_pg_num }}"
+#  pgp_num: "{{ osd_pool_default_pg_num }}"
+#  rule_name: "replicated_rule"
+#  type: 1
+#  erasure_profile: ""
+#  expected_num_objects: ""
+#  application: "rbd"
+#  size: "{{ osd_pool_default_size }}"
+#  min_size: "{{ osd_pool_default_min_size }}"
+#  pg_autoscale_mode: False
+#openstack_cephfs_data_pool:
+#  name: "manila_data"
+#  pg_num: "{{ osd_pool_default_pg_num }}"
+#  pgp_num: "{{ osd_pool_default_pg_num }}"
+#  rule_name: "replicated_rule"
+#  type: 1
+#  erasure_profile: ""
+#  expected_num_objects: ""
+#  application: "rbd"
+#  size: "{{ osd_pool_default_size }}"
+#  min_size: "{{ osd_pool_default_min_size }}"
+#  pg_autoscale_mode: False
+#openstack_cephfs_metadata_pool:
+#  name: "manila_metadata"
+#  pg_num: "{{ osd_pool_default_pg_num }}"
+#  pgp_num: "{{ osd_pool_default_pg_num }}"
+#  rule_name: "replicated_rule"
+#  type: 1
+#  erasure_profile: ""
+#  expected_num_objects: ""
+#  application: "rbd"
+#  size: "{{ osd_pool_default_size }}"
+#  min_size: "{{ osd_pool_default_min_size }}"
+#  pg_autoscale_mode: False
+openstack_pools:
+  - "{{ openstack_glance_pool }}"
+  - "{{ openstack_cinder_pool }}"
+  - "{{ openstack_nova_pool }}"
+  - "{{ openstack_cinder_backup_pool }}"
+#  - "{{ openstack_gnocchi_pool }}"
+#  - "{{ openstack_cephfs_data_pool }}"
+#  - "{{ openstack_cephfs_metadata_pool }}"
+
+#[mgrs.yml]
+ceph_mgr_modules: ['status', 'prometheus', 'pg_autoscaler']
+
+#[osds.yml]
+osd_scenario: lvm
