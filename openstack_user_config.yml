@@ -19,8 +19,7 @@ global_overrides:
   # If using different protocols (https/http) for the public/internal
   # endpoints the two addresses must be different.
   #
-  #external_lb_vip_address: openstack.slipsprogrammor.no
-  external_lb_vip_address: 192.168.3.9
+  external_lb_vip_address: openstack.slipsprogrammor.no
   management_bridge: "br-mgmt"
   provider_networks:
     - network:
