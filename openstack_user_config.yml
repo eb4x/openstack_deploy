@@ -64,6 +64,13 @@ global_overrides:
           - cinder_volume
           - nova_compute
           - ceph-osd
+#    - network:
+#        container_bridge: "br-internet"
+#        container_type: "veth"
+#        container_interface: "eth5"
+#        type: "raw"
+#        group_binds:
+#          - designate_all
 
 ###
 ### Infrastructure
@@ -129,6 +136,9 @@ storage-infra_hosts: *infrastructure_hosts
 
 # cinder volume hosts (Ceph RBD-backed)
 storage_hosts: *infrastructure_hosts
+
+# designate
+dnsaas_hosts: *infrastructure_hosts
 
 # glance
 image_hosts: *infrastructure_hosts

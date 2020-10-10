@@ -1,0 +1,17 @@
+---
+lxc_container_networks:
+  lxcbr0_address:
+    bridge: lxcbr0
+    interface: eth0
+    type: veth
+    dhcp_use_routes: false
+    static_routes:
+      - cidr: 192.168.3.0/24
+        gateway: 10.0.3.1
+
+container_extra_networks:
+  dns_address:
+    bridge: br-internet
+    interface: eth5
+    type: veth
+    dhcp_use_dns: false
