@@ -47,7 +47,7 @@ global_overrides:
         container_type: "veth"
         container_interface: "eth11"
         type: "vlan"
-        range: "1000"
+        range: "3,1000"
         net_name: "vlan"
         group_binds:
           - neutron_openvswitch_agent

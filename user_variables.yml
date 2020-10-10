@@ -92,7 +92,7 @@ neutron_provider_networks:
   network_mappings: "physnet1:br-provider"
   network_interface_mappings: "br-provider:br-vlan"
   network_types: "vxlan,vlan,flat"
-  network_vlan_ranges: "physnet1:1000:1000"
+  network_vlan_ranges: "physnet1:3:3,physnet1:1000:1000"
   network_vxlan_ranges: "1:1000"
 
 # If you wish to change the dhcp_domain configured for both nova and neutron
