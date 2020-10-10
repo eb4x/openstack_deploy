@@ -74,10 +74,8 @@ _infrastructure_hosts: &infrastructure_hosts
     ip: 172.29.236.2
   key-shrimp:
     ip: 172.29.236.3
-#  mint-panda:
-#    ip: 172.29.236.4
-  novel-dodo:
-    ip: 172.29.236.5
+  mint-panda:
+    ip: 172.29.236.4
 
 # nova hypervisors
 compute_hosts: &compute_hosts
@@ -85,8 +83,8 @@ compute_hosts: &compute_hosts
     ip: 172.29.236.2
   key-shrimp:
     ip: 172.29.236.3
-#  mint-panda:
-#    ip: 172.29.236.4
+  mint-panda:
+    ip: 172.29.236.4
   novel-dodo:
     ip: 172.29.236.5
 
@@ -95,8 +93,8 @@ ceph-osd_hosts:
     ip: 172.29.236.2
   key-shrimp:
     ip: 172.29.236.3
-#  mint-panda:
-#    ip: 172.29.236.4
+  mint-panda:
+    ip: 172.29.236.4
   novel-dodo:
     ip: 172.29.236.5
 
@@ -115,9 +113,9 @@ repo-infra_hosts: *infrastructure_hosts
 haproxy_hosts: *infrastructure_hosts
 
 # rsyslog server
-#log_hosts:
-#  novel-dodo:
-#    ip: 172.29.236.5
+log_hosts:
+  novel-dodo:
+    ip: 172.29.236.5
 
 ###
 ### OpenStack
