@@ -131,6 +131,9 @@ log_hosts:
 # keystone
 identity_hosts: *infrastructure_hosts
 
+# barbican
+key-manager_hosts: *infrastructure_hosts
+
 # cinder api services
 storage-infra_hosts: *infrastructure_hosts
 
