@@ -1,4 +1,6 @@
 ---
+nova_pci_passthrough_whitelist: '{ "vendor_id": "10de", "product_id": "11bf" }'
+
 #[osds.yml] BEGIN
 lvm_volumes:
   - { data_vg: ceph-5931b19d-c70b-42a8-a9e4-aa6f3711d8cc, data: osd-block-42d8df22-1c86-4edc-8ee8-d5867f3db7e8 }

@@ -75,10 +75,14 @@ nova_galera_database: nova_cell1
 # hosts.
 nova_libvirt_images_rbd_pool: vms
 nova_cpu_mode: custom
+nova_pci_alias:
+  - '{ "name": "GK104GL", "device_type": "type-PCI", "vendor_id": "10de", "product_id": "11bf" }'
 nova_nova_conf_overrides:
   libvirt:
     cpu_model: Westmere-IBRS
     cpu_model_extra_flags: pcid
+nova_scheduler_extra_filters:
+  - PciPassthroughFilter
 nova_virt_type: kvm
 
 ## Common Neutron Overrides
