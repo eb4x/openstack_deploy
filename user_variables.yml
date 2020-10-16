@@ -21,6 +21,8 @@
 ## Debug and Verbose options.
 debug: false
 
+journald_remote_enabled: true
+
 lxc_container_ssh_key: "{{ lookup('file', '/root/.ssh/id_ecdsa.pub') }}"
 
 ## Set the service setup host
