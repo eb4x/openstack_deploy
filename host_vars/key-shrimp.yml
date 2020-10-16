@@ -1,0 +1,10 @@
+---
+#[osds.yml] BEGIN
+lvm_volumes:
+  - { data_vg: ceph-907b30cd-9380-4b1a-847a-da292073179e, data: osd-block-c39a9ed4-c1fa-43df-9533-e90c571facfe }
+  - { data_vg: ceph-e97f5be3-5c21-4b19-b02e-a4098f13dde8, data: osd-block-ce53d78f-6c7f-48a3-a32a-1e575bed4c4e }
+  - { data_vg: ceph-9f4ed8e4-4a42-430a-9090-e63150305528, data: osd-block-628c58a2-c36e-4aec-971c-5d4994d870a1 }
+  - { data_vg: ceph-277d6ed6-a0c7-47a6-b313-6ca58c1de23c, data: osd-block-91060bae-30f1-4ba6-8744-674d6629e6e8 }
+  - { data_vg: ceph-6f3b9fd7-914a-446d-8e1f-b8a96dc1da8d, data: osd-block-d905818d-5fc7-4680-ae7f-5f1ccd1485a2 }
+  - { data_vg: ceph-d63b323b-c34c-4a73-bb52-c343af1fdae7, data: osd-block-5a6694df-b101-4643-9152-f43e231e6566 }
+#[osds.yml] END
