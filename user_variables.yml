@@ -92,7 +92,7 @@ neutron_dns_domain: "openstack.slipsprogrammor.no."
 neutron_dnsmasq_dns_servers: "192.168.3.1"
 
 neutron_plugin_type: ml2.ovs.dvr
-neutron_l2_population: true
+neutron_firewall_driver: openvswitch
 neutron_provider_networks:
   network_flat_networks: "physnet1"
   network_mappings: "physnet1:br-provider"
