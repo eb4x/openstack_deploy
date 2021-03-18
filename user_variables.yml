@@ -25,6 +25,9 @@ journald_remote_enabled: true
 
 lxc_container_ssh_key: "{{ lookup('file', '/root/.ssh/id_ed25519.pub') }}"
 
+venv_default_pip_packages:
+  - "elasticsearch>=7.0.0,<8.0.0"
+
 ## Set the service setup host
 # The default is to use localhost (the deploy host where ansible runs),
 # but any other host can be used. If using an alternative host with all
@@ -43,6 +46,20 @@ lxc_container_ssh_key: "{{ lookup('file', '/root/.ssh/id_ed25519.pub') }}"
 # repositories to install OpenStack using distribution packages
 install_method: source
 
+profiler_overrides: &os_profiler
+  profiler:
+    enabled: true
+    trace_sqlalchemy: true
+    hmac_keys: "alpha,bravo"  # This needs to be set consistently throughout the deployment
+    connection_string: "elasticsearch://{{ internal_lb_vip_address }}:9201"
+    es_doc_type: "notification"
+    es_scroll_time: "2m"
+    es_scroll_size: "10000"
+    filter_error_trace: "false"
+
+## Common Keystone Overrides
+keystone_keystone_conf_overrides: *os_profiler
+
 ## Common Glance Overrides
 # Set glance_default_store to "swift" if using Cloud Files backend
 # or "rbd" if using ceph backend; the latter will trigger ceph to get
@@ -58,6 +75,8 @@ glance_default_store: rbd
 # glance_rbd_store_pool: images
 # glance_rbd_store_chunk_size: 8
 
+glance_glance_api_conf_overrides: *os_profiler
+
 ## Common Cinder Overrides
 cinder_backends:
   RBD:
@@ -70,6 +89,8 @@ cinder_backends:
     rbd_secret_uuid: "{{ cinder_ceph_client_uuid }}"
     report_discard_supported: true
 cinder_service_backup_driver: cinder.backup.drivers.ceph.CephBackupDriver
+
+cinder_cinder_conf_overrides: *os_profiler
 
 ## Common Nova Overrides
 nova_galera_database: nova_cell1
@@ -84,6 +105,8 @@ nova_nova_conf_overrides:
     cpu_model: IvyBridge-IBRS
     cpu_model_extra_flags: pcid
     hw_machine_type: x86_64=q35
+  <<: *os_profiler
+
 nova_scheduler_extra_filters:
   - PciPassthroughFilter
 nova_virt_type: kvm
@@ -91,6 +114,8 @@ nova_virt_type: kvm
 ## Common Neutron Overrides
 neutron_dns_domain: "openstack.slipsprogrammor.no."
 neutron_dnsmasq_dns_servers: "192.168.3.1"
+
+neutron_neutron_conf_overrides: *os_profiler
 
 neutron_plugin_type: ml2.ovs.dvr
 neutron_firewall_driver: openvswitch
@@ -106,8 +131,28 @@ neutron_provider_networks:
 # dhcp_domain: openstacklocal
 
 ## Common Horizon Overrides
+horizon_config_overrides: *os_profiler
 horizon_enable_password_retrieve: true
 horizon_show_keystone_v2_rc: false
+horizon_user_pip_packages: [ 'elastic-apm' ]
+
+## Common Magnum Overrides
+magnum_config_overrides: *os_profiler
+
+aodh_aodh_conf_overrides: *os_profiler
+barbican_config_overrides: *os_profiler
+ceilometer_ceilometer_conf_overrides: *os_profiler
+designate_designate_conf_overrides: *os_profiler
+gnocchi_conf_overrides: *os_profiler
+heat_heat_conf_overrides: *os_profiler
+ironic_ironic_conf_overrides: *os_profiler
+octavia_octavia_conf_overrides: *os_profiler
+rally_config_overrides: *os_profiler
+sahara_conf_overrides: *os_profiler
+swift_swift_conf_overrides: *os_profiler
+tacker_tacker_conf_overrides: *os_profiler
+trove_config_overrides: *os_profiler
+
 
 ## Common Glance Overrides when using a Swift back-end
 # By default when 'glance_default_store' is set to 'swift' the playbooks will
@@ -213,7 +258,29 @@ deployment_environment_variables:
 # All the previous variables are used inside a var, in the group vars.
 # You can override the current keepalived definition (see
 # group_vars/all/keepalived.yml) in your user space if necessary.
-#
+
+haproxy_extra_services:
+  - service:
+      haproxy_service_name: elastic-logstash
+      haproxy_ssl: "{{ haproxy_ssl }}"
+      haproxy_backend_nodes: "{{ groups['kibana'] | default([]) }}" # Kibana nodes are also Elasticsearch coordination nodes
+      haproxy_port: 9201  # This is set using the "elastic_hap_port" variable
+      haproxy_check_port: 9200  # This is set using the "elastic_port" variable
+      haproxy_backend_port: 9200  # This is set using the "elastic_port" variable
+      haproxy_balance_type: tcp
+  - service:
+      haproxy_service_name: kibana
+      haproxy_ssl: "{{ haproxy_ssl }}"
+      haproxy_backend_nodes: "{{ groups['kibana'] | default([]) }}"
+      haproxy_port: 81  # This is set using the "Kibana_nginx_port" variable
+      haproxy_balance_type: tcp
+  - service:
+      haproxy_service_name: apm-server
+      haproxy_ssl: "{{ haproxy_ssl }}"
+      haproxy_backend_nodes: "{{ groups['apm-server'] | default([]) }}"
+      haproxy_port: 8200 # this is set using the "apm_port" variable
+      haproxy_balance_type: tcp
+
 # Uncomment this to disable keepalived installation (cf. documentation)
 # haproxy_use_keepalived: False
 #
@@ -434,3 +501,9 @@ ceph_mgr_modules: ['status', 'prometheus', 'pg_autoscaler']
 
 #[osds.yml]
 osd_scenario: lvm
+
+#####################
+# OPS CONFIGURATION #
+#####################
+elastic_systemd_timeout: 360
+logstash_heap_size: 1024

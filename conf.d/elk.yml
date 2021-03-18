@@ -1,0 +1,17 @@
+# For the puposes of this example, the kibana nodes have been added to
+# different host machines that the logging nodes. You can also split out
+# elastic-logstash into separate containers and put elasticsearch on
+# more suited hosts. The intention here is to show that the different
+# components can scale independently of one another.
+
+kibana_hosts:
+  novel-dodo:
+    ip: 172.29.236.5
+
+elastic-logstash_hosts:
+  novel-dodo:
+    ip: 172.29.236.5
+
+apm-server_hosts:
+  novel-dodo:
+    ip: 172.29.236.5
