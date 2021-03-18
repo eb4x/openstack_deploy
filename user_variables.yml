@@ -309,11 +309,6 @@ haproxy_keepalived_internal_interface: br-mgmt
 # haproxy_keepalived_priority_master:
 # haproxy_keepalived_priority_backup:
 
-haproxy_ssl_letsencrypt_enable: true
-haproxy_ssl_letsencrypt_install_method: "distro"
-haproxy_ssl_letsencrypt_email: letsencrypt@slipsprogrammor.no
-haproxy_interval: 2000
-
 #haproxy_user_ssl_cert: /etc/openstack_deploy/ssl/openstack.slipsprogrammor.no.pem
 #haproxy_user_ssl_key: /etc/openstack_deploy/ssl/openstack.slipsprogrammor.no.key
 

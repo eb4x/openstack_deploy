@@ -1,4 +1,9 @@
 ---
+haproxy_ssl_letsencrypt_enable: true
+haproxy_ssl_letsencrypt_install_method: "distro"
+haproxy_ssl_letsencrypt_email: letsencrypt@slipsprogrammor.no
+haproxy_interval: 2000
+
 #[osds.yml] BEGIN
 lvm_volumes:
   - { data_vg: ceph-4752d64f-11f0-485e-99f6-2f46909fb898, data: osd-block-908fd4a5-e9d0-429e-b7eb-dac798a72e01 }
