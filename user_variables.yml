@@ -137,7 +137,10 @@ horizon_show_keystone_v2_rc: false
 horizon_user_pip_packages: [ 'elastic-apm' ]
 
 ## Common Magnum Overrides
-magnum_config_overrides: *os_profiler
+magnum_config_overrides:
+  cinder:
+    default_docker_volume_type: RBD
+  <<: *os_profiler
 
 aodh_aodh_conf_overrides: *os_profiler
 barbican_config_overrides: *os_profiler
