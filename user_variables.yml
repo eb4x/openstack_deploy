@@ -115,6 +115,9 @@ nova_virt_type: kvm
 neutron_dns_domain: "openstack.slipsprogrammor.no."
 neutron_dnsmasq_dns_servers: "192.168.3.1"
 
+neutron_git_repo: "https://github.com/openstack/neutron.git"
+neutron_git_install_branch: "{{ neutron_git_track_branch }}"
+
 neutron_neutron_conf_overrides: *os_profiler
 
 neutron_plugin_type: ml2.ovs.dvr
