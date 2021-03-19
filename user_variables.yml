@@ -103,7 +103,7 @@ nova_pci_alias:
 nova_nova_conf_overrides:
   libvirt:
     cpu_model: IvyBridge-IBRS
-    cpu_model_extra_flags: pcid
+    cpu_model_extra_flags: pcid,vmx
     hw_machine_type: x86_64=q35
   <<: *os_profiler
 
