@@ -135,6 +135,7 @@ neutron_provider_networks:
 
 ## Common Horizon Overrides
 horizon_config_overrides: *os_profiler
+horizon_enable_barbican_ui: false
 horizon_enable_password_retrieve: true
 horizon_show_keystone_v2_rc: false
 horizon_user_pip_packages: [ 'elastic-apm' ]
